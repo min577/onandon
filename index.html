@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>딸기 정식기 광합성 ↔ 에너지 · 온톨로지 제어</title>
+<meta name="description" content="딸기 정식기 광합성–에너지 구동기 충돌을 온톨로지로 표현하고 6-Layer 규칙으로 해소하는 인터랙티브 데모">
+<style>
+:root{
+  --navy:#1e3355; --accent:#2e5aac; --ink:#23262b; --mut:#6b7280;
+  --line:#d8dee6; --bg:#f4f6fa; --card:#ffffff; --lightblue:#b7c6e0;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+a{color:var(--accent)}
+.hero{background:linear-gradient(160deg,#1e3355 0%,#24407a 100%);color:#fff;padding:56px 24px 48px}
+.hero .in{max-width:1080px;margin:0 auto}
+.kicker{color:var(--lightblue);font-weight:700;font-size:14px;letter-spacing:.3px}
+.rule{width:54px;height:3px;background:var(--accent);margin:14px 0 18px;border-radius:2px}
+.hero h1{margin:0;font-size:34px;line-height:1.25;font-weight:800}
+.hero h1 .sub{display:block;color:var(--lightblue);font-weight:700}
+.hero p.lead{margin:18px 0 0;font-size:17px;color:#dbe4f3;max-width:760px}
+.logos{display:flex;align-items:center;gap:22px;margin-top:30px}
+.logos img{height:34px;background:#fff;padding:7px 12px;border-radius:8px}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 24px 8px}
+h2.sec{color:var(--navy);font-size:20px;margin:6px 0 4px}
+p.secsub{color:var(--mut);margin:0 0 22px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.hero h1{font-size:26px}}
+.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-decoration:none;color:inherit;transition:transform .12s ease,box-shadow .12s ease,border-color .12s}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(30,51,85,.12);border-color:var(--accent)}
+.card .num{font-size:13px;font-weight:800;color:var(--accent)}
+.card h3{margin:8px 0 6px;font-size:18px;color:var(--navy)}
+.card p{margin:0;color:var(--mut);font-size:14px;flex:1}
+.card .go{margin-top:14px;font-size:13px;font-weight:700;color:var(--accent)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:20px;padding:3px 10px;margin-bottom:4px;width:max-content}
+.tag.demo{background:#7a8699}
+.flow{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:18px;font-size:14px;color:var(--ink)}
+.flow b{color:var(--navy)}
+footer{max-width:1080px;margin:0 auto;padding:34px 24px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);margin-top:34px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="in">
+    <div class="kicker">온실 제어 · 온톨로지 그라운딩 연구</div>
+    <div class="rule"></div>
+    <h1>딸기 정식기 광합성 ↔ 에너지(비용)
+      <span class="sub">구동기 충돌·Trade-off의 온톨로지 제어</span>
+    </h1>
+    <p class="lead">광합성을 높이려면 빛·온도·CO₂를 동시에 맞춰야 하지만, 이를 조절하는 구동기들은 같은 노드를 서로 반대로 끌어당기며 충돌한다. 온톨로지로 이 관계를 표현하고, 6-Layer 규칙과 우선순위로 충돌을 해소해 최적 제어 명령을 만든다.</p>
+    <div class="logos">
+      <img src="assets/khu_logo.png" alt="경희대학교 스마트팜과학과">
+      <img src="assets/agis_logo.png" alt="AGIS Lab">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2 class="sec">인터랙티브 도구</h2>
+  <p class="secsub">클릭해서 직접 노드를 눌러보고, 환경을 바꿔가며 Layer 의사결정을 확인하세요.</p>
+  <div class="grid">
+    <a class="card" href="tools/conflict.html">
+      <span class="tag">온톨로지 맵</span>
+      <div class="num">01</div>
+      <h3>구동기 충돌 맵</h3>
+      <p>논문 18편을 구동기→상태변수→목표로 연결한 self-contained 그래프. 충돌 노드를 클릭하면 구동기별 문헌 근거·운영비·해소 우선순위가, 문헌 노드를 클릭하면 그 논문의 근거 내용이 나온다.</p>
+      <div class="go">맵 열기 →</div>
+    </a>
+    <a class="card" href="tools/layer-demo.html">
+      <span class="tag demo">Layer 의사결정</span>
+      <div class="num">02</div>
+      <h3>Layer 방식 의사결정 · P–I 곡선</h3>
+      <p>왼쪽에서 환경(광·온도·CO₂)과 비용 상한을 조절하면, 6-Layer가 순서대로 처리해 구동기 동작 순서·이유·비용과 정식기 최적 작동점 대비 달성 광합성을 보여준다.</p>
+      <div class="go">데모 열기 →</div>
+    </a>
+    <a class="card" href="results.html">
+      <span class="tag">정량 결과</span>
+      <div class="num">03</div>
+      <h3>검증 결과 (정량)</h3>
+      <p>거대 LLM 단독 vs Layer 적용을 8개 기준으로 채점한 점수, 기준별 차이, 그리고 "그 답변대로 제어하면 광합성률이 얼마인가"를 본 결과(outcome) 시뮬레이션.</p>
+      <div class="go">결과 보기 →</div>
+    </a>
+    <a class="card" href="tools/api-responses.html">
+      <span class="tag">정성 결과</span>
+      <div class="num">04</div>
+      <h3>실제 API 응답 비교</h3>
+      <p>동일 시나리오 4개에 실제 LLM을 호출한 전문. 거대 LLM 단독은 일반 산문, Layer 적용은 충돌·우선순위·SmartFarm 코드·문헌 ID·비용으로 구체화된다.</p>
+      <div class="go">응답 보기 →</div>
+    </a>
+  </div>
+
+  <div class="flow">
+    <b>흐름</b> &nbsp; 문제(광·온도·CO₂ ↔ 에너지 비용) → 온톨로지 연결 시 <b>구동기 노드 중첩(충돌)</b> 발견 → 해법: 지식을 <b>6-Layer</b>로 분리 + <b>우선순위</b>로 충돌 해소 → 정량·정성으로 검증.
+  </div>
+</main>
+
+<footer>
+  경희대학교 스마트팜과학과 · AGIS Lab · OnAndOn &nbsp;|&nbsp; 모든 시각화는 외부 의존성 없는 self-contained 정적 페이지입니다.
+</footer>
+</body>
+</html>

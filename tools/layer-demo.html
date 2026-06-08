@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>딸기 정식기 — Layer 방식 광합성-비용 최적화</title>
+<style>
+:root{--bg:#fbfaf8;--panel:#fff;--ink:#2d2727;--muted:#756b6b;--line:#ded7d3;--rose:#b86772;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR','Segoe UI',sans-serif;color:var(--ink);font-size:15px}
+header{padding:16px 24px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#fff,#f8ecee)}
+h1{margin:0;font-size:23px} .sub{color:var(--muted);margin-top:5px;font-size:14px}
+#wrap{display:grid;grid-template-columns:330px 1fr 430px;height:calc(100vh - 86px)}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:16px;overflow:auto}
+#right{border-right:0;border-left:1px solid var(--line)}
+#mid{padding:16px 22px;overflow:auto;background:radial-gradient(circle at 50% 0,#fff,#fbfaf8 60%)}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+.card h3{margin:0 0 10px;font-size:17px}
+.card.budget{border-color:#f0d9a8;background:#fffdf7}
+button.preset{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;margin:5px 0;cursor:pointer;font-size:15px}
+button.preset:hover,button.preset.on{border-color:var(--rose);color:var(--rose);background:#fff7f7}
+label.ctl{display:block;margin:12px 0 4px;font-size:14px;font-weight:600}
+input[type=range]{width:100%} .val{float:right;color:var(--rose);font-weight:700}
+.state{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-block;border:1px solid #eadddd;border-radius:999px;padding:3px 11px;font-size:13.5px;background:#fff8f8}
+.seq{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.seq.conflict{border-color:var(--rose);background:#fff6f6}
+.seqn{font-weight:800;font-size:15px;color:#fff;background:#7b4e57;border-radius:50%;width:28px;height:28px;line-height:28px;text-align:center}
+.seq.conflict .seqn{background:#b86772}
+.seq .L{font-size:11.5px;color:#8a6d72;font-weight:700} .seq .q{font-size:14.5px;font-weight:600;margin-top:1px} .seq .r{font-size:13.5px;color:#2e3a2e;margin-top:3px;font-weight:600} .seq .why{font-size:12.5px;color:#666;margin-top:4px;line-height:1.5;background:#faf7f4;border-radius:8px;padding:6px 8px} .seq .c{font-size:12.5px;color:#b45309;margin-top:4px} .seq .c.save{color:#2e7d32}
+.seq.done{border-color:#2e7d32;background:#f1f7f2} .seq.done .seqn{background:#2e7d32} .seq.done .doneb{font-size:13.5px;color:#2c5a32;margin-top:5px;line-height:1.55} .seq.done .doneb b{font-size:15px}
+.seq .tline{font-size:12.5px;color:#1f6feb;margin-top:4px;background:#eef4fd;border-radius:8px;padding:5px 8px}
+.note{font-size:13px;color:var(--muted);line-height:1.55}
+.budgetbar{height:14px;border-radius:8px;background:#eee;overflow:hidden;margin:6px 0}
+.budgetbar > div{height:100%}
+.bstat{font-size:15px;font-weight:800;border-radius:10px;padding:10px 12px;margin:8px 0}
+.bstat.ok{background:#f1f7f2;border:1px solid #c9e0cd;color:#2e7d32}
+.bstat.over{background:#fdecec;border:1px solid #f0bcbc;color:#b3261e}
+.grand b{color:#b86772;font-size:19px}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #eee} .kv b{color:#2e7d32}
+.chart-help{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6}
+.lgd{display:inline-block;width:22px;height:3px;vertical-align:middle;margin:0 5px 0 12px}
+svg.pi{width:100%;height:auto;display:block}
+</style></head><body>
+<header><h1>딸기 정식기 — <b style="color:#b86772">Layer 방식</b> 광합성–비용 최적화</h1>
+<div class="sub">정식기 기준 P–I 곡선의 <b>최적 광합성 작동점은 고정</b>. 왼쪽에서 환경을 바꾸면 Layer가 처리해 <b>오른쪽에 구동기 동작을 순서대로</b> 제시하고, 왼쪽 하단 <b>비용 상한</b> 내에서 달성 가능한 수준을 계산합니다. (LLM 아님 · 규칙 기반 solver)</div></header>
+<div id="wrap">
+<aside>
+ <div class="card"><h3>시나리오 프리셋</h3><div id="presets"></div></div>
+ <div class="card"><h3>환경 입력 (직접 조절)</h3>
+  <label class="ctl">외부 자연광(PAR) <span class="val" id="vnatPAR"></span></label><input type="range" id="natPAR" min="0" max="1000" step="20">
+  <label class="ctl">실내온도 Tin <span class="val" id="vTin"></span></label><input type="range" id="Tin" min="5" max="40" step="1">
+  <label class="ctl">실내 CO₂ <span class="val" id="vCO2"></span></label><input type="range" id="CO2" min="200" max="1200" step="20">
+  <label class="ctl">잎온도 leaf_T <span class="val" id="vleafT"></span></label><input type="range" id="leafT" min="15" max="40" step="1">
+  <label class="ctl">풍속 <span class="val" id="vwind"></span></label><input type="range" id="wind" min="0" max="20" step="1">
+  <label class="ctl">온실 면적 <span class="val" id="varea"></span></label><input type="range" id="area" min="100" max="5000" step="100">
+  <label class="ctl">적용 시간 <span class="val" id="vhours"></span></label><input type="range" id="hours" min="1" max="24" step="1">
+ </div>
+ <div class="card budget"><h3>💰 비용 상한 (예산)</h3>
+  <label class="ctl">최대 운영비 <span class="val" id="vcostMax"></span></label><input type="range" id="costMax" min="0" max="200" step="2">
+  <div class="note" id="budgetTotal"></div>
+ </div>
+</aside>
+
+<div id="mid">
+ <div class="card"><h3>① 입력 상태</h3><div class="state" id="state"></div></div>
+ <div class="card"><h3>② 딸기 정식기 P–I 곡선 — 최적 작동점 고정</h3>
+  <svg class="pi" viewBox="0 0 600 320" id="pi"></svg>
+  <div class="chart-help"><span class="lgd" style="background:#9aa0a8"></span>제어 전(현재)
+   <span class="lgd" style="background:#2e7d32"></span>제어 후(최적 온도+CO₂) · <b style="color:#2e7d32">초록 세로선=정식기 최적 작동점(고정)</b> · <b style="color:#b86772">분홍선=예산 내 달성</b> · ◆=포화 무릎</div>
+ </div>
+ <div class="card"><h3>④ 예상 시간 응답 (1차 지연) — 온도·CO₂가 목표로</h3>
+  <svg class="pi" viewBox="0 0 600 230" id="tr"></svg>
+  <div class="chart-help">현재값에서 선택 구동기로 목표(<b style="color:#c62828">온도 21.5°C</b>·<b style="color:#1f6feb">CO₂ 목표</b>)에 1차 지연으로 수렴. 천창 환기 ~0.15°C/min·능동냉방 ~0.4°C/min·CO₂는 환기율(ACH) 기반 감쇠. (점선=목표)</div>
+ </div>
+</div>
+
+<aside id="right">
+ <div class="card budget"><h3>비용 vs 예산 <span style="font-size:11px;font-weight:600;color:#8a5a14;background:#fdf2dd;border-radius:8px;padding:2px 8px;vertical-align:middle">문헌 기반 추정</span></h3>
+  <div id="bstat"></div>
+  <div class="grand" id="grand"></div>
+  <div class="budgetbar"><div id="bbar"></div></div>
+  <div class="kv"><span>달성 광합성 Pn</span><b id="pn"></b></div>
+  <div class="kv"><span>정식기 최적 대비</span><b id="pnopt"></b></div>
+ </div>
+ <div class="card"><h3>구동기 동작 순서 (Layer D)</h3><div class="note" id="active" style="margin-bottom:8px"></div><div id="seq"></div></div>
+</aside>
+</div>
+<script>
+const COST={"heater": {"krw": 28, "energy": "kerosene"}, "thermal_curtain": {"krw": -11, "energy": "kerosene_saving"}, "supplemental_led": {"krw": 3.2, "energy": "electricity"}, "cooler": {"krw": 2.7, "energy": "electricity"}, "co2_generator": {"krw": 2.4, "energy": "co2"}, "roof_vent": {"krw": 0.05, "energy": "electricity_motor"}, "shade_screen": {"krw": 0.05, "energy": "electricity_motor"}}, PRICES={"electricity_KRW_per_kWh": 53, "kerosene_KRW_per_L": 1150, "co2_KRW_per_kg": 800, "crop_KRW_per_kg": 12000}, PRESETS=[{"name": "① 아침 (CO₂ 부족, 일사 상승)", "natPAR": 260, "Tin": 24, "CO2": 380, "leafT": 24, "wind": 2}, {"name": "② 정오 (고온·강광)", "natPAR": 820, "Tin": 30, "CO2": 700, "leafT": 32, "wind": 2}, {"name": "③ 겨울 흐림 (저광·저온)", "natPAR": 150, "Tin": 12, "CO2": 600, "leafT": 12, "wind": 1}, {"name": "④ 고CO₂ 활용 (오후)", "natPAR": 520, "Tin": 26, "CO2": 1000, "leafT": 27, "wind": 2}], LABEL={"heater": "난방기", "thermal_curtain": "보온커튼", "supplemental_led": "LED 보광", "cooler": "냉방기", "co2_generator": "CO₂발생기", "roof_vent": "천창(환기)", "shade_screen": "차광커튼", "circulation_fan": "순환팬"};
+const $=id=>document.getElementById(id);
+const won=n=>'₩'+Math.round(n).toLocaleString('ko-KR');
+const state={natPAR:260,Tin:24,CO2:380,leafT:24,wind:2,area:1000,hours:6,costMax:100};
+
+// ---- strawberry post-transplant photosynthesis model ----
+const PMAX0=26, ALPHA=0.06, RD=1.5, OPT=21.5, CO2_TARGET=800, CO2_OPT=900, LED_PER_PAR=0.0212;
+// ---- 1차 지연(time) 동역학 파라미터 (문헌 근거) ----
+// 온실 기후=heat balance 선형화 1차 응답; 천창 환기 냉각 ~0.15°C/min(아치형 roof-vent 연구);
+// CO₂=환기율(ACH) 기반 1차 감쇠(농도감쇠법). 능동 냉방은 더 빠름.
+const TAU_T={cooler:6, roof_vent:12, heater:18, none:40};   // 온도 시간상수(분)
+const RATE_T={cooler:0.40, roof_vent:0.15, heater:0.15};    // °C/min (근사)
+const TAU_CO2={gen_closed:8, vent_open:3, none:60};         // CO₂ 시간상수(분)
+const CO2_SAT=1200, CO2_CEIL=1500;   // 광합성 포화 ~1000–1300ppm, >1500 생육저해·낭비
+const fT=T=>Math.exp(-Math.pow((T-OPT)/6.5,2));
+const fC=C=>{const Ce=Math.min(C,1300); return 1.1*Ce/(Ce+250);};  // 포화: 1300 이상은 광합성 이득 없음
+function photo(I,T,C){const Pm=PMAX0*fT(T)*fC(C); return Math.max(0,(ALPHA*I*Pm)/(ALPHA*I+Pm)-RD);}
+function kneePAR(T,C){const P1000=photo(1000,T,C); for(let I=50;I<=1000;I+=10){if(photo(I,T,C)>=0.9*P1000)return I;} return 1000;}
+// FIXED optimum operating point for 정식기 (optimal env): knee of the optimal curve
+const TARGET_OPT=kneePAR(OPT,CO2_OPT);
+const PN_OPT=photo(TARGET_OPT,OPT,CO2_OPT);
+
+const c=tok=>(COST[tok]&&COST[tok].krw)||0;
+// plan to reach a light target; allowCO2 toggles CO2 enrichment (budget back-off)
+function plan(s,target,allowCO2){
+ const ph=[],cmds=[]; let m2=0;
+ const needCool=s.Tin>23.5, needHeat=s.Tin<19.5, needCO2=allowCO2 && s.CO2<CO2_TARGET;
+ let Tctrl=s.Tin, Cctrl=s.CO2, tauT=TAU_T.none, tauCO2=TAU_CO2.none;
+ const dT=Math.abs(s.Tin-OPT);
+ if(s.leafT>=35){ph.push({L:'B1 안전',q:`잎온도 ${s.leafT}°C ≥ 35°C (하드 안전선 초과)`,r:'차광커튼 CLOSE + 천창 OPEN 강제 (잎 식히기)',why:'잎 화상 임계 초과는 즉시 회복 불가 손상 → 광합성·CO₂·비용보다 안전이 절대 우선(Layer B1).',t:'⏱ 즉시 발동(긴급)',conflict:true,c:c('shade_screen')+c('roof_vent')});
+   cmds.push({act:'shade_screen',cmd:'CLOSE(강제)'},{act:'roof_vent',cmd:'OPEN(강제)'}); m2+=c('shade_screen')+c('roof_vent'); Tctrl=Math.min(Tctrl,24); tauT=TAU_T.roof_vent;}
+ if(needCool && needCO2){
+   ph.push({L:'C·P2 충돌해소',q:`온도 ${s.Tin}°C 낮춰야 & CO₂ ${s.CO2}<800 보충해야 — 동시 충돌`,r:'냉방기 ON(목표 21–23°C) · CO₂발생기 ON(+100~200, 목표≥800) · 천창 CLOSED',why:'천창을 열면 온도는 빨리 내려가지만 보충한 CO₂가 환기로 빠져나감. 냉방은 실내를 가둔 채 온도만 낮춰 광합성 기질인 CO₂를 보존 → 두 목표 동시 충족 (80400-02 CO₂보충·80400-09 환기손실).',t:`⏱ 온도 ~${Math.max(1,Math.round(dT/RATE_T.cooler))}분 내 21–23°C(능동냉방 ~0.4°C/min) · CO₂ ~${TAU_CO2.gen_closed}분 내 ≥800(밀폐+주입)`,conflict:true,c:c('cooler')+c('co2_generator')});
+   cmds.push({act:'cooler',cmd:'ON (목표 21–23°C, CO₂ 보존)'},{act:'co2_generator',cmd:'ON (+100~200, 목표≥800)'},{act:'roof_vent',cmd:'CLOSED'}); m2+=c('cooler')+c('co2_generator'); Tctrl=OPT; Cctrl=CO2_OPT; tauT=TAU_T.cooler; tauCO2=TAU_CO2.gen_closed;
+ } else {
+   if(needCool){ph.push({L:'C·P1 온도',q:`실내온도 ${s.Tin}°C — 광합성 최적(20–23°C) 초과`,r:'천창 OPEN(단계적, 목표 21–23°C)',why:'잎온도가 최적대를 벗어나면 광합성 효소 활성↓. CO₂가 충분(≥800)해 환기 손실 부담이 작아 가장 싼 천창 환기로 냉각.',t:`⏱ 천창 환기 ~0.15°C/min → 약 ${Math.max(1,Math.round(dT/RATE_T.roof_vent))}분 내 목표 (외기·풍속 의존)`,c:c('roof_vent')}); cmds.push({act:'roof_vent',cmd:'OPEN (목표 21–23°C)'}); m2+=c('roof_vent'); Tctrl=OPT; tauT=TAU_T.roof_vent;}
+   if(needHeat){ph.push({L:'C·P1 온도',q:`실내온도 ${s.Tin}°C — 저온(광합성·생육 저해)`,r:'보온커튼 CLOSE(난방수요↓) → 관부 국소난방(근권 18±2°C)',why:'저온은 광합성·뿌리활착 저해. 보온커튼으로 열손실을 먼저 줄여 난방비를 낮춘 뒤(−11원) 국소난방으로 최소 에너지로 가온 (80400-18 −43.8%).',t:`⏱ 가온 ~0.15°C/min → 약 ${Math.max(1,Math.round(dT/RATE_T.heater))}분에 걸쳐 승온`,c:c('thermal_curtain')+c('heater')}); cmds.push({act:'thermal_curtain',cmd:'CLOSE (열손실↓)'},{act:'heater',cmd:'국소 가온 (근권 18±2°C)'}); m2+=c('thermal_curtain')+c('heater'); Tctrl=OPT; tauT=TAU_T.heater;}
+   if(needCO2){ph.push({L:'C·P2 CO₂',q:`CO₂ ${s.CO2}ppm < 800 — 광합성 기질 부족`,r:'CO₂발생기 ON(캐노피 +100~200, 목표≥800) · 천창 CLOSED',why:'CO₂는 광합성의 원료. 800 미만이면 Pmax(최대광합성)가 낮아져 곡선 전체가 내려감. 천창을 닫아 손실 방지 (80400-02 수량+22%).',t:`⏱ 밀폐+주입 → 약 ${TAU_CO2.gen_closed}분 내 ≥800ppm (천창 열면 ~${TAU_CO2.vent_open}분 만에 유실)`,c:c('co2_generator')}); cmds.push({act:'co2_generator',cmd:'ON (+100~200, 목표≥800)'}); m2+=c('co2_generator'); Cctrl=CO2_OPT; tauCO2=TAU_CO2.gen_closed;}
+ }
+ // CO₂ 충분/과다 처리 (포화·낭비) — 고 CO₂는 무조건 좋은 게 아님
+ if(!needCO2){
+   if(s.CO2>CO2_CEIL){ph.push({L:'C·P3 CO₂과다',q:`CO₂ ${s.CO2}ppm > ${CO2_CEIL} — 포화 초과(이득 없음·생육저해 위험)`,r:'CO₂발생기 OFF + 단계 환기로 ~1000–1200ppm 정상화',why:`광합성은 ~1000–1300ppm에서 포화 → 그 이상은 추가 이득 거의 없이 CO₂ 비용만 낭비, >1500ppm은 생육 저해·acclimation 위험. 발생기 끄고 환기로 정상화. [CO2SAT]`,t:`⏱ 환기 시 CO₂ ~${TAU_CO2.vent_open}분 내 하강`,c:c('roof_vent')}); cmds.push({act:'co2_generator',cmd:'OFF'},{act:'roof_vent',cmd:'단계 환기(정상화)'}); m2+=c('roof_vent'); Cctrl=1100;}
+   else if(s.CO2>=950){ph.push({L:'C·P2 CO₂',q:`CO₂ ${s.CO2}ppm — 이미 충분(포화 부근 ${CO2_SAT})`,r:'CO₂발생기 OFF (추가 보충 불필요·비용 0)',why:`광합성 CO₂ 반응은 ~1000–1300ppm에서 포화 → 이 수준에서 더 넣어도 광합성 이득 거의 없음(낭비). 고 CO₂ 자체는 ~1500ppm까지는 무방하나 보충은 불필요. [CO2SAT]`,t:'⏱ 조치 없음',c:0});}
+ }
+ const deficit=target-s.natPAR;
+ if(deficit>20){const led=+(deficit*LED_PER_PAR).toFixed(1); ph.push({L:'C·P2 빛',q:`자연광 ${s.natPAR} < 목표 ${Math.round(target)} PAR — 광량 부족 ${Math.round(deficit)}`,r:`LED 보광 ON (부족분 ${Math.round(deficit)} µmol만, HLI on-off)`,why:'정식기 최적 작동점까지 광량이 모자람. 전체 점등 대신 부족분만 HLI로 채워 전력 낭비 없이 광합성 확보 (80400-16 DLI 12.6 → 수량+32%).',t:'⏱ 즉시(광은 점등 즉시 반영)',c:led}); cmds.push({act:'supplemental_led',cmd:`부족분 ${Math.round(deficit)} µmol 보광`}); m2+=led;}
+ else if(deficit<-20){ph.push({L:'C·P2 빛',q:`자연광 ${s.natPAR} > 목표 ${Math.round(target)} PAR — 광 과잉`,r:'차광커튼 부분 (목표 PAR까지, 과차광 금지)',why:'포화점 이상의 빛은 광합성 이득 없이 잎온도만 올림. 부분 차광으로 열부담을 줄이되, 과차광은 광합성 저하라 목표선까지만 (80400-109).',t:'⏱ 즉시(차광 즉시 PAR↓)',c:c('shade_screen')}); cmds.push({act:'shade_screen',cmd:'부분 차광 (목표 PAR까지)'}); m2+=c('shade_screen');}
+ else ph.push({L:'C·P2 빛',q:`자연광 ${s.natPAR} ≈ 목표 PAR`,r:'추가 광원/차광 불필요',why:'자연광이 이미 정식기 최적 작동점 근처 → 광 조절 비용 0.',t:'⏱ 즉시',c:0});
+ return {ph,cmds,m2:+m2.toFixed(2),Tctrl,Cctrl,tauT,tauCO2};
+}
+// achieve the FIXED optimum within budget; back off light then CO2 if over
+function solve(s){
+ const budget=s.costMax;
+ let p=plan(s,TARGET_OPT,true);
+ if(p.m2<=budget||budget<=0&&false) return {...p,target:TARGET_OPT,limited:false,sac:''};
+ if(p.m2<=budget) return {...p,target:TARGET_OPT,limited:false,sac:''};
+ // 1) reduce light target (less LED)
+ const fixed=plan(s,s.natPAR,true).m2;            // temp+CO2 (+shade) without LED
+ if(fixed<=budget){
+   const ledBudget=budget-fixed; const affordable=ledBudget/LED_PER_PAR;
+   const tgt=Math.max(s.natPAR,Math.min(TARGET_OPT,s.natPAR+affordable));
+   const q=plan(s,tgt,true); return {...q,target:tgt,limited:true,sac:'예산 제약 → 광량 목표 축소(LED 절감)'};
+ }
+ // 2) drop CO2 enrichment (cheaper, lower curve)
+ const noco2=plan(s,s.natPAR,false);
+ if(noco2.m2<=budget){
+   const ledBudget=budget-noco2.m2; const affordable=ledBudget/LED_PER_PAR;
+   const tgt=Math.max(s.natPAR,Math.min(TARGET_OPT,s.natPAR+Math.max(0,affordable)));
+   const q=plan(s,tgt,false); return {...q,target:tgt,limited:true,sac:'예산 부족 → CO₂ 보충 생략 + 광량 축소(광합성 하락)'};
+ }
+ // 3) even temperature control over budget
+ return {...noco2,target:s.natPAR,limited:true,sac:'예산이 온도·환경 제어비도 못 미침 — 상한 상향 필요'};
+}
+
+// ---- P–I curve ----
+const X0=52,X1=580,Y0=270,Y1=22,IMAX=1000,PCEIL=24;
+const xpx=I=>X0+(I/IMAX)*(X1-X0), ypx=P=>Y0-(P/PCEIL)*(Y0-Y1);
+function cpts(T,C){let p='';for(let I=0;I<=IMAX;I+=20)p+=`${xpx(I).toFixed(1)},${ypx(photo(I,T,C)).toFixed(1)} `;return p.trim();}
+function drawPI(sol){
+ const before=cpts(state.Tin,state.CO2), after=cpts(sol.Tctrl,sol.Cctrl);
+ const knee=kneePAR(sol.Tctrl,sol.Cctrl), ach=sol.target;
+ const pnAch=photo(ach,sol.Tctrl,sol.Cctrl);
+ let g='';
+ g+=`<line x1="${X0}" y1="${Y0}" x2="${X1}" y2="${Y0}" stroke="#bbb"/><line x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1}" stroke="#bbb"/>`;
+ for(let I=0;I<=1000;I+=200)g+=`<line x1="${xpx(I)}" y1="${Y0}" x2="${xpx(I)}" y2="${Y0+4}" stroke="#bbb"/><text x="${xpx(I)}" y="${Y0+18}" font-size="12" fill="#888" text-anchor="middle">${I}</text>`;
+ for(let P=0;P<=20;P+=5)g+=`<line x1="${X0-4}" y1="${ypx(P)}" x2="${X0}" y2="${ypx(P)}" stroke="#bbb"/><text x="${X0-8}" y="${ypx(P)+4}" font-size="12" fill="#888" text-anchor="end">${P}</text>`;
+ g+=`<text x="${(X0+X1)/2}" y="${Y0+34}" font-size="13" fill="#555" text-anchor="middle">PAR (µmol·m⁻²·s⁻¹) — 딸기 정식기 기준</text>`;
+ g+=`<text x="14" y="${(Y0+Y1)/2}" font-size="13" fill="#555" text-anchor="middle" transform="rotate(-90,14,${(Y0+Y1)/2})">순광합성 Pn</text>`;
+ g+=`<polyline points="${before}" fill="none" stroke="#9aa0a8" stroke-width="2.5" stroke-dasharray="5 4"/>`;
+ g+=`<polyline points="${after}" fill="none" stroke="#2e7d32" stroke-width="3"/>`;
+ g+=`<path d="M ${xpx(knee)} ${ypx(photo(knee,sol.Tctrl,sol.Cctrl))-7} l 6 7 l -6 7 l -6 -7 z" fill="#d6a74a"/>`;
+ // FIXED optimum (green) line
+ g+=`<line x1="${xpx(TARGET_OPT)}" y1="${Y0}" x2="${xpx(TARGET_OPT)}" y2="${Y1}" stroke="#2e7d32" stroke-width="2" stroke-dasharray="2 3"/>`;
+ g+=`<line x1="${X0}" y1="${ypx(PN_OPT)}" x2="${xpx(TARGET_OPT)}" y2="${ypx(PN_OPT)}" stroke="#2e7d32" stroke-width="1" stroke-dasharray="4 3"/>`;
+ g+=`<circle cx="${xpx(TARGET_OPT)}" cy="${ypx(PN_OPT)}" r="5" fill="#2e7d32"/><text x="${xpx(TARGET_OPT)}" y="${Y1-6}" font-size="12" fill="#2e7d32" font-weight="700" text-anchor="middle">정식기 최적 ${TARGET_OPT}</text>`;
+ // achievable-within-budget (pink) if limited
+ if(sol.limited && Math.abs(ach-TARGET_OPT)>5){
+   g+=`<line x1="${xpx(ach)}" y1="${Y0}" x2="${xpx(ach)}" y2="${Y1}" stroke="#b86772" stroke-width="2"/>`;
+   g+=`<circle cx="${xpx(ach)}" cy="${ypx(pnAch)}" r="5" fill="#b86772"/><text x="${xpx(ach)}" y="${Y1+2}" font-size="11" fill="#b86772" font-weight="700" text-anchor="middle">예산 내 ${Math.round(ach)}</text>`;
+ }
+ $('pi').innerHTML=g;
+}
+// ---- time response (first-order) ----
+function drawTR(sol){
+ const TX0=48,TX1=556,TY0=190,TY1=22,TMAX=40;
+ const xt=m=>TX0+(m/TMAX)*(TX1-TX0);
+ const yT=T=>TY0-((T-5)/30)*(TY0-TY1);
+ const yC=C=>TY0-((C-200)/800)*(TY0-TY1);
+ const T0=state.Tin,Teq=sol.Tctrl,tT=sol.tauT||40;
+ const C0=state.CO2,Ceq=sol.Cctrl,tC=sol.tauCO2||60;
+ const Tt=m=>Teq+(T0-Teq)*Math.exp(-m/tT);
+ const Ct=m=>Ceq+(C0-Ceq)*Math.exp(-m/tC);
+ let tl='',cl='';for(let m=0;m<=TMAX;m+=2){tl+=`${xt(m).toFixed(1)},${yT(Tt(m)).toFixed(1)} `;cl+=`${xt(m).toFixed(1)},${yC(Ct(m)).toFixed(1)} `;}
+ let g='';
+ g+=`<line x1="${TX0}" y1="${TY0}" x2="${TX1}" y2="${TY0}" stroke="#bbb"/>`;
+ for(let m=0;m<=40;m+=10){g+=`<line x1="${xt(m)}" y1="${TY0}" x2="${xt(m)}" y2="${TY0+4}" stroke="#bbb"/><text x="${xt(m)}" y="${TY0+18}" font-size="12" fill="#888" text-anchor="middle">${m}분</text>`;}
+ // left temp axis
+ for(let T=10;T<=30;T+=10)g+=`<text x="${TX0-6}" y="${yT(T)+4}" font-size="11" fill="#c62828" text-anchor="end">${T}°</text>`;
+ for(let C=400;C<=1000;C+=300)g+=`<text x="${TX1+6}" y="${yC(C)+4}" font-size="11" fill="#1f6feb">${C}</text>`;
+ // setpoints
+ g+=`<line x1="${TX0}" y1="${yT(Teq)}" x2="${TX1}" y2="${yT(Teq)}" stroke="#c62828" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>`;
+ g+=`<line x1="${TX0}" y1="${yC(Ceq)}" x2="${TX1}" y2="${yC(Ceq)}" stroke="#1f6feb" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>`;
+ g+=`<polyline points="${tl}" fill="none" stroke="#c62828" stroke-width="3"/>`;
+ g+=`<polyline points="${cl}" fill="none" stroke="#1f6feb" stroke-width="3"/>`;
+ g+=`<text x="${TX0+6}" y="${TY1+2}" font-size="12" fill="#c62828" font-weight="700">온도(좌)</text><text x="${TX1-6}" y="${TY1+2}" font-size="12" fill="#1f6feb" font-weight="700" text-anchor="end">CO₂(우)</text>`;
+ $('tr').innerHTML=g;
+}
+
+function vlab(k){return {natPAR:state.natPAR,Tin:state.Tin+'°C',CO2:state.CO2+' ppm',leafT:state.leafT+'°C',wind:state.wind+' m/s',area:state.area.toLocaleString('ko-KR')+' m²',hours:state.hours+' 시간',costMax:state.costMax+' 원/m²·h'}[k];}
+const NUM=['natPAR','Tin','CO2','leafT','wind','area','hours','costMax'];
+
+function render(){
+ $('state').innerHTML=[['외부광',state.natPAR],['실내온도',state.Tin+'°C'],['CO₂',state.CO2+' ppm'],['잎온도',state.leafT+'°C'],['예산',state.costMax+'원/m²·h']].map(([k,v])=>`<span class="pill">${k}: <b>${v}</b></span>`).join('');
+ const sol=solve(state), A=state.area, H=state.hours;
+ const grand=sol.m2*A*H, budgetTotal=state.costMax*A*H;
+ // sequence (right)
+ $('active').textContent = sol.limited? ('⚠ '+sol.sac) : '예산 내 정식기 최적 광합성 달성';
+ const pnAchS=photo(sol.target,sol.Tctrl,sol.Cctrl), pctS=Math.round(pnAchS/PN_OPT*100), overS=sol.m2>state.costMax;
+ let seqHtml=sol.ph.map((p,i)=>`<div class="seq ${p.conflict?'conflict':''}"><div class="seqn">${i+1}</div><div><div class="L">${p.L}</div><div class="q">${p.q}</div><div class="r">→ ${p.r}</div>${p.t?`<div class="tline">${p.t}</div>`:''}${p.why?`<div class="why">💡 ${p.why}</div>`:''}${p.c?`<div class="c ${p.c<0?'save':''}">비용 ${p.c<0?'절감 ':'+ '}${Math.abs(p.c)}원/m²·h</div>`:''}</div></div>`).join('');
+ // final step: 광합성 문제 해결 + 비용 최적화
+ const doneTitle = overS ? '예산 한도 도달 — 한도 내 최선' : (sol.limited ? '예산 내 달성 (목표 일부 하향)' : '광합성 문제 해결 + 비용 최적화 완료');
+ const doneMsg = sol.limited
+   ? `예산(${state.costMax}원/m²·h) 제약으로 ${sol.sac}. 그 한도에서 광합성 <b>${pctS}%</b>(Pn ${pnAchS.toFixed(1)}) 달성 — 더 원하면 비용 상한을 올리세요.`
+   : `구동기 충돌을 우선순위로 해소하고, 정식기 최적 광합성 <b>${pctS}%</b>(Pn ${pnAchS.toFixed(1)})를 <b>${sol.m2}원/m²·h</b>로 달성 — 예산 ${state.costMax} 이내 최소비용.`;
+ seqHtml += `<div class="seq done"><div class="seqn">✓</div><div><div class="L">결과 (Layer D 합성)</div><div class="q">${doneTitle}</div><div class="doneb">${doneMsg}</div></div></div>`;
+ $('seq').innerHTML=seqHtml;
+ // budget status
+ const over=sol.m2>state.costMax;
+ $('bstat').innerHTML=`<div class="bstat ${over?'over':'ok'}">${over?'예산 초과 — 목표 하향':'예산 내 가능'} · ${sol.m2}원/m²·h / 상한 ${state.costMax}원/m²·h</div>`;
+ $('grand').innerHTML=`${A.toLocaleString('ko-KR')}m² · ${H}시간 비용 ≈ <b>${won(grand)}</b> <span class="note">/ 예산 ${won(budgetTotal)}</span>`;
+ $('budgetTotal').innerHTML=`예산 총액 ≈ <b>${won(budgetTotal)}</b> (${A.toLocaleString('ko-KR')}m²·${H}h)<br>※ 모든 비용은 일반 온실 장비·요금 기준 <b>추정치(초안)</b> — 실제 장비 사양·요금으로 보정 권장. 가격(문헌): 농사용전기 ${PRICES.electricity_KRW_per_kWh}원/kWh·면세등유 ${PRICES.kerosene_KRW_per_L}원/L·CO₂ ${PRICES.co2_KRW_per_kg}원/kg.`;
+ const pct=Math.min(100,state.costMax>0?sol.m2/state.costMax*100:100);
+ $('bbar').innerHTML=`<div style="width:${pct}%;background:${over?'#b3261e':'#2e7d32'}"></div>`;
+ const pnAch=photo(sol.target,sol.Tctrl,sol.Cctrl);
+ $('pn').textContent=pnAch.toFixed(1)+' µmol·m⁻²·s⁻¹';
+ $('pnopt').textContent=Math.round(pnAch/PN_OPT*100)+'% (최적 '+PN_OPT.toFixed(1)+')';
+ drawPI(sol); drawTR(sol);
+}
+
+function setState(p){Object.assign(state,p); NUM.forEach(k=>{$(k).value=state[k]; $('v'+k).textContent=vlab(k);}); render();}
+$('presets').innerHTML=PRESETS.map((p,i)=>`<button class="preset" data-i="${i}">${p.name}</button>`).join('');
+document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));b.classList.add('on');const p=PRESETS[+b.dataset.i];setState({natPAR:p.natPAR,Tin:p.Tin,CO2:p.CO2,leafT:p.leafT,wind:p.wind});}));
+NUM.forEach(k=>$(k).addEventListener('input',e=>{state[k]=+e.target.value;$('v'+k).textContent=vlab(k);render();}));
+document.querySelector('.preset').classList.add('on'); setState(state);
+</script>
+</body></html>
