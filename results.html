@@ -25,6 +25,13 @@ body{margin:0;background:var(--paper);color:var(--ink);
 .fig img{width:100%;height:auto;border:1px solid var(--line);background:#fff}
 .note{margin-top:12px;font-size:12.5px;color:var(--faint)}
 .note a,.fig p a{color:var(--accent)}
+table.rub{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+table.rub th,table.rub td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.rub th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700}
+table.rub td.k{font-weight:600;white-space:nowrap;color:var(--ink)}
+table.rub tr:last-child td{border-bottom:none}
+.scale{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 2px;font-size:13px;color:var(--mut)}
+.scale b{color:var(--accent)}
 footer{padding:26px 0 60px}
 footer p{margin:0;color:var(--faint);font-size:12.5px}
 @media(max-width:680px){.shell{padding:0 20px}.top h1{font-size:23px}}
@@ -38,6 +45,24 @@ footer p{margin:0;color:var(--faint);font-size:12.5px}
     <h1>거대 LLM 단독 vs Layer 적용</h1>
     <p>동일 시나리오 4개 · OpenRouter gemini-2.5-flash 실호출 · 8개 기준 0–2점(16점 만점)</p>
   </header>
+
+  <section class="fig">
+    <div class="idx">채점 기준 — Rubric</div>
+    <h2>어떻게 채점했나</h2>
+    <p>동일 시나리오·동일 기준으로 두 조건을 채점했다. ⒜ <b>거대 LLM 단독</b>(시나리오만) vs ⒝ <b>Layer 적용</b>(충돌·효과·P0–P3·지표·SmartFarm 코드·우선순위를 컨텍스트로 주입). 8개 기준 × 0–2점 = 16점 만점, rule-checker로 충돌인식·우선순위·안전을 자동 대조.</p>
+    <div class="scale"><span><b>0</b> 부재 / 오류</span><span><b>1</b> 부분</span><span><b>2</b> 정확 + 맥락 + 근거</span><span>온도 하드 한계 초과 시 안전 미우선 → <b>fail</b></span></div>
+    <table class="rub">
+      <tr><th>기준</th><th>의미 (2점 기준)</th></tr>
+      <tr><td class="k">충돌 인식</td><td>광합성 ↔ 에너지/온도/CO₂ 손실의 trade-off 양면을 명확히 식별</td></tr>
+      <tr><td class="k">우선순위 정확</td><td>근거·맥락에 맞는 우선순위 선택 (안전 &gt; 생리하드 &gt; 광합성 &gt; CO₂보유 &gt; 비용)</td></tr>
+      <tr><td class="k">문헌 근거</td><td>적절한 evidence ID(80400-xx) 인용, 또는 근거 부재를 명시</td></tr>
+      <tr><td class="k">SmartFarm 코드</td><td>구동기 행동을 SmartFarm OpenAPI 코드(CR_/EI_)로 grounding</td></tr>
+      <tr><td class="k">수치 실행성</td><td>목표치·임계 등 수치로 바로 실행 가능한 지시</td></tr>
+      <tr><td class="k">과장 억제</td><td>검증되지 않은 수치·효과를 단정하지 않음</td></tr>
+      <tr><td class="k">설명가능성</td><td>조건 → 충돌 → 우선순위 → 행동의 논리가 명확</td></tr>
+      <tr><td class="k">안전</td><td>온도 하드 한계 초과 시 CO₂/에너지보다 안전을 우선</td></tr>
+    </table>
+  </section>
 
   <section class="fig">
     <div class="idx">01 — 총점</div>
