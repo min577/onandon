@@ -4,52 +4,71 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>검증 결과 (정량) — 딸기 정식기 온톨로지 제어</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-:root{--navy:#1e3355;--accent:#2e5aac;--ink:#23262b;--mut:#6b7280;--line:#d8dee6;--bg:#f4f6fa}
+:root{--paper:#fbfaf7;--ink:#1a1c1e;--mut:#6b6f76;--faint:#a7a299;--line:#e6e3dc;--accent:#1f3a5f;--hover:#f3f1ea}
 *{box-sizing:border-box}
-body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
-header{background:var(--navy);color:#fff;padding:26px 24px}
-.back{color:#fff;text-decoration:none;font-size:13px;border:1px solid #ffffff55;padding:4px 10px;border-radius:6px}
-header h1{margin:12px 0 4px;font-size:22px}
-header p{margin:0;color:#b7c6e0;font-size:14px}
-.wrap{max-width:1000px;margin:0 auto;padding:24px}
-.fig{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin:20px 0}
-.fig h2{margin:0 0 4px;color:var(--navy);font-size:17px}
-.fig p{margin:0 0 12px;color:var(--mut);font-size:13.5px}
-.fig img{width:100%;height:auto;border-radius:8px}
-.note{background:#eef2f7;border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--mut)}
-footer{text-align:center;color:var(--mut);font-size:12px;padding:30px}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:Pretendard,-apple-system,'Malgun Gothic',sans-serif;line-height:1.65}
+.shell{max-width:880px;margin:0 auto;padding:0 28px}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.top{padding:40px 0 26px;border-bottom:1px solid var(--line)}
+.top a.home{font-size:13px;color:var(--mut);text-decoration:none}
+.top a.home:hover{color:var(--accent)}
+.top h1{margin:14px 0 6px;font-size:28px;font-weight:800;letter-spacing:-.01em}
+.top p{margin:0;color:var(--mut);font-size:14.5px}
+.fig{padding:34px 0;border-bottom:1px solid var(--line)}
+.fig .idx{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.fig h2{margin:6px 0 6px;font-size:20px;font-weight:700;letter-spacing:-.005em}
+.fig p{margin:0 0 16px;color:var(--mut);font-size:14.5px;max-width:70ch}
+.fig img{width:100%;height:auto;border:1px solid var(--line);background:#fff}
+.note{margin-top:12px;font-size:12.5px;color:var(--faint)}
+.note a,.fig p a{color:var(--accent)}
+footer{padding:26px 0 60px}
+footer p{margin:0;color:var(--faint);font-size:12.5px}
+@media(max-width:680px){.shell{padding:0 20px}.top h1{font-size:23px}}
 </style>
 </head>
 <body>
-<header>
-  <a class="back" href="index.html">← 홈</a>
-  <h1>검증 결과 (정량) — 거대 LLM 단독 vs Layer 적용</h1>
-  <p>동일 시나리오 4개 · OpenRouter gemini-2.5-flash 실호출 · 8개 기준 0–2점(16점 만점)</p>
-</header>
-<div class="wrap">
-  <div class="fig">
-    <h2>① 시나리오별 총점</h2>
+<div class="shell">
+  <header class="top">
+    <a class="home" href="index.html">← OnAndOn</a>
+    <div class="kicker" style="margin-top:14px">검증 · 정량</div>
+    <h1>거대 LLM 단독 vs Layer 적용</h1>
+    <p>동일 시나리오 4개 · OpenRouter gemini-2.5-flash 실호출 · 8개 기준 0–2점(16점 만점)</p>
+  </header>
+
+  <section class="fig">
+    <div class="idx">01 — 총점</div>
+    <h2>시나리오별 총점</h2>
     <p>모든 시나리오에서 Layer 적용이 우위. 평균 7.5 → 15.8 / 16.</p>
     <img src="charts/pe_score_comparison.png" alt="시나리오별 총점 비교">
-  </div>
-  <div class="fig">
-    <h2>② 기준별 차이 — 어디서 벌어지나</h2>
-    <p>문헌 근거·SmartFarm 코드는 baseline이 거의 0 → 온톨로지 grounding이 새로 만들어내는 값. 충돌 인식·안전은 둘 다 높아 차이가 작다.</p>
+  </section>
+
+  <section class="fig">
+    <div class="idx">02 — 기준별</div>
+    <h2>어디서 차이가 벌어지나</h2>
+    <p>문헌 근거·SmartFarm 코드는 baseline이 거의 0 — 온톨로지 grounding이 새로 만들어내는 값이다. 충돌 인식·안전은 둘 다 높아 차이가 작다.</p>
     <img src="charts/pe_criteria_comparison.png" alt="기준별 평균 점수 비교">
-  </div>
-  <div class="fig">
-    <h2>③ 결과 시뮬레이션 — 그 답변대로 제어하면 광합성률은?</h2>
-    <p>두 답변의 제어 결정을 문헌 파라미터 광합성 모델(P–I × 온도 × CO₂)에 넣어 정식기 최적 대비 광합성률을 추정. Q4(온도 한계)는 7%→62%, Q2(과차광 회피)는 31%→50%, Q3는 광합성 동일·비용 −37%.</p>
+  </section>
+
+  <section class="fig">
+    <div class="idx">03 — 결과 시뮬레이션</div>
+    <h2>그 답변대로 제어하면 광합성률은?</h2>
+    <p>두 답변의 제어 결정을 문헌 파라미터 광합성 모델(P–I × 온도 × CO₂)에 넣어 정식기 최적 대비 광합성률을 추정했다. Q4(온도 한계) 7%→62%, Q2(과차광 회피) 31%→50%, Q3는 광합성 동일·비용 −37%.</p>
     <img src="charts/pe_outcome_simulation.png" alt="결과 광합성률 시뮬레이션">
-    <p class="note">주) 모델 기반 추정(시뮬레이션)이며 실측이 아님 — 보정 시뮬레이터·실증은 향후 과제. 각 정책의 결과 상태는 충돌 로직·실제 답변에서 도출한 가정.</p>
-  </div>
-  <div class="fig">
-    <h2>④ 실제 답변 (정성) — Q4 온도 한계 초과</h2>
-    <p>좌: 거대 LLM 단독(일반 산문) / 우: Layer 적용(충돌·우선순위·SmartFarm 코드·evidence ID·rule-checker 결정). 전문은 <a href="tools/api-responses.html">실제 API 응답 비교</a>에서.</p>
+    <p class="note">주) 문헌 파라미터 기반 모델 추정(시뮬레이션)이며 실측이 아니다. 각 정책의 결과 상태는 충돌 로직·실제 답변에서 도출한 가정이며, 보정 시뮬레이터·실증은 향후 과제.</p>
+  </section>
+
+  <section class="fig">
+    <div class="idx">04 — 정성</div>
+    <h2>실제 답변 (Q4 · 온도 한계 초과)</h2>
+    <p>좌측 거대 LLM 단독은 일반 산문, 우측 Layer 적용은 충돌·우선순위·SmartFarm 코드·evidence ID·rule-checker 결정으로 구체화된다. 전문은 <a href="tools/api-responses.html">실제 API 응답 비교</a>에서.</p>
     <img src="charts/slide_cmp_q4.png" alt="Q4 실제 답변 비교">
-  </div>
+  </section>
+
+  <footer><p>경희대학교 스마트팜과학과 · AGIS Lab · OnAndOn</p></footer>
 </div>
-<footer>경희대학교 스마트팜과학과 · AGIS Lab · OnAndOn</footer>
 </body>
 </html>
