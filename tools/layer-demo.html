@@ -44,6 +44,11 @@ input[type=range]{width:100%;accent-color:var(--accent)} .val{float:right;color:
 .grand b{color:var(--accent);font-size:18px}
 .kv{display:flex;justify-content:space-between;font-size:13.5px;padding:6px 0;border-bottom:1px solid var(--line)} .kv b{color:var(--up)}
 .chart-help{font-size:12.5px;color:var(--muted);margin-top:9px;line-height:1.65}
+.formula{font-size:13.5px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin:11px 0 2px;line-height:1.6}
+.formula b{color:var(--accent);font-weight:700;letter-spacing:.02em}
+.formula .eq{font-family:'Cambria Math','Times New Roman',Georgia,serif;font-size:16px;font-style:italic;white-space:nowrap}
+.formula .fnote{display:block;font-size:11.5px;color:var(--muted);font-style:normal;margin-top:6px;line-height:1.55}
+.formula .fnote b{color:var(--muted)}
 .lgd{display:inline-block;width:20px;height:3px;vertical-align:middle;margin:0 5px 0 12px}
 svg.pi{width:100%;height:auto;display:block}
 </style></head><body>
@@ -76,6 +81,8 @@ svg.pi{width:100%;height:auto;display:block}
  <div class="card"><h3>① 입력 상태</h3><div class="state" id="state"></div></div>
  <div class="card"><h3>② 딸기 정식기 P–I 곡선 — 최적 작동점 고정</h3>
   <svg class="pi" viewBox="0 0 600 320" id="pi"></svg>
+  <div class="formula"><b>모델식</b> &nbsp;<span class="eq">P<sub>n</sub> = (α·I·P<sub>max</sub>) / (α·I + P<sub>max</sub>) − R<sub>d</sub></span>
+   <span class="fnote"><b>직각쌍곡선 광반응곡선</b>(rectangular hyperbola) · I = PAR(광량), P<sub>max</sub> = P<sub>max0</sub>·f(T)·f(CO₂) (온도·CO₂ 반응으로 변조), R<sub>d</sub> = 암호흡. 계수 P<sub>max0</sub>=26·α=0.06·R<sub>d</sub>=1.5, T<sub>opt</sub>=21.5°C, CO₂ 포화 ~1300ppm. <b>식 형태는 식물생리 문헌 표준</b>이며, 계수는 딸기 정식기 문헌 범위 내 추정치(실측 미피팅).</span></div>
   <div class="chart-help"><span class="lgd" style="background:#9aa0a8"></span>제어 전(현재)
    <span class="lgd" style="background:#2f6b46"></span>제어 후(최적 온도+CO₂) · <b style="color:#2f6b46">초록 세로선=정식기 최적 작동점(고정)</b> · <b style="color:#9a6a2f">주황선=예산 내 달성</b> · ◆=포화 무릎</div>
  </div>
