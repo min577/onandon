@@ -207,10 +207,11 @@ function selectNode(n){document.querySelectorAll('.hl').forEach(x=>x.classList.r
   const evcard=(a,cls,sign)=>`<div class="evcard ${cls}"><div class="hd"><span class="nm">${sign} ${esc(a.label)}${a.code?' <code>'+esc(a.code)+'</code>':''}</span>${costBadge(a)}</div>`+
     `${(a.paper||a.text)?`<div class="bd">${a.paper?'<span class="pill">문헌 '+esc(a.paper)+'</span> ':''}${a.text?esc(a.text):''}</div>`:''}`+
     `${a.cost_note?`<div class="bd" style="color:#8a6d3b">비용가정: ${esc(a.cost_note)}</div>`:''}</div>`;
-  h+=`<h3 style="margin-top:14px">구동기별 근거 (문헌·내용·비용)</h3>`;
-  h+=`<div class="secbar up">▲ 광합성을 올리는 구동기 (+)</div>`;
+  const vn=esc(cd.label||n.label);
+  h+=`<h3 style="margin-top:14px">구동기별 근거 (문헌·내용·비용) <span class="small" style="font-weight:600;color:var(--faint)">— <b style="color:var(--muted)">${vn}</b> 기준 ↑/↓</span></h3>`;
+  h+=`<div class="secbar up">▲ <b>${vn}</b> 올리는 구동기 (+)</div>`;
   h+=cd.plus.map(a=>evcard(a,'p','▲')).join('');
-  h+=`<div class="secbar dn">▼ 온도·광을 내리는 구동기 (−)</div>`;
+  h+=`<div class="secbar dn">▼ <b>${vn}</b> 내리는 구동기 (−)</div>`;
   h+=cd.minus.map(a=>evcard(a,'m','▼')).join('');
   if(cd.prices) h+=`<div class="small" style="margin-top:6px">${esc(cd.prices)} <i>(소비량 초안 · 보정 권장)</i></div>`;
   if(cd.rule){
